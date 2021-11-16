@@ -1,19 +1,24 @@
+node ('master') {
 
-node ('buildserver') {
+    stage ('scm_checkout'){
+        checkout([$class: 'GitSCM', 
+        branches: [[name: '*/master']], 
+        extensions: [], 
+        userRemoteConfigs: [[url: 'https://github.com/abheethy/Maven-petclinic-project.git']]])
+    }
+    
+    
+    stage ('build'){
+        sh 'mvn clean install'
+    }
 
-  stage ('SCM_checkout') {
-    checkout([$class: 'GitSCM',
-        branches: [[name: '*/master']],
-        extensions: [],
-        userRemoteConfigs: [[credentialsId: 'plusforum',
-        url: 'https://github.com/ganeshhp/helloworldweb.git']]])
-  }
+    input 'Proceed with Deployment?'
 
-  stage ('maven_build') {
-      sh 'mvn clean install'
-  }
+    stage ('artifactory') {
+       sh 'curl -uuser1:AP3wgCK5cmUdGA9uDryy7drWJrB -T target/petclinic.war "https://plussforum.jfrog.io/artifactory/petclinic-generic-local/petclinic.war"'
+    }
 
-  input 'Proceed or Abort'
-
+    stage ('archive') {
+        archiveArtifacts artifacts: 'target/*.war', followSymlinks: false
+    }  
 }
-
